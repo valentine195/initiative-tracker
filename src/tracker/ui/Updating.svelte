@@ -67,6 +67,10 @@
     const conditionDiv = (node: HTMLElement) => {
         conditionText = new TextComponent(node);
         conditionText.onChange((v) => (status = v));
+        node.onkeydown = (evt) => {
+            if (evt.key === "Enter") {
+                status ? addStatus() : performUpdate(true);
+        }};
         createModal();
     };
     const createModal = () => {
@@ -82,6 +86,7 @@
             conditionText.setValue(item);
 
             modal.close();
+            addStatus();
         });
     };
     function init(el: HTMLInputElement, target: "hp" | "ac") {
