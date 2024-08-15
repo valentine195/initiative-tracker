@@ -97,7 +97,7 @@
                     on:remove={() => {
                         tracker.updateCreatures({
                             creature,
-                            change: { status: [status] }
+                            change: { remove_status: [status] }
                         });
                     }}
                 />

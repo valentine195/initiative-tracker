@@ -40,6 +40,7 @@ type CreatureUpdate = {
     temp?: number;
     max?: number;
     status?: Condition[];
+    remove_status?: Condition[];
     hidden?: boolean;
     enabled?: boolean;
     //this is so dirty
@@ -183,7 +184,7 @@ function createTracker() {
                     const unc = _settings.statuses.find(
                         (s) => s.id == _settings.unconsciousId
                     );
-                    if (unc) creature.status.add(unc);
+                    if (unc) creature.addCondition(unc);
                 }
             }
             if (change.max) {
@@ -226,18 +227,12 @@ function createTracker() {
             }
             if (change.status?.length) {
                 for (const status of change.status) {
-                    if ([...creature.status].find((s) => s.id == status.id)) {
-                        creature.status = new Set(
-                            [...creature.status].filter(
-                                (s) => s.id != status.id
-                            )
-                        );
-                        _logger?.log(
-                            `${creature.name} relieved of status ${status.name}`
-                        );
-                    } else {
-                        creature.status.add(status);
-                    }
+                    creature.addCondition(status);
+                }
+            }
+            if (change.remove_status?.length) {
+                for (const status of change.remove_status) {
+                    creature.removeCondition(status);
                 }
             }
             if ("hidden" in change) {
@@ -432,12 +427,12 @@ function createTracker() {
                                     description: "",
                                     id: getId()
                                 };
-                                creature.status.add(cond);
+                                creature.addCondition(cond);
                             } else if (
                                 typeof status == "object" &&
                                 status.name?.length
                             ) {
-                                creature.status.add(status as Condition);
+                                creature.addCondition(status as Condition);
                             }
                         }
                     }
@@ -463,7 +458,7 @@ function createTracker() {
                 }
                 return creatures;
             }),
-        doUpdate: (toAddString: string, statuses: Condition[], ac: string) =>
+        doUpdate: (toAddString: string, statuses: Condition[], ac: string, removeStatuses: Condition[] = []) =>
             updating.update((updatingCreatures) => {
                 const messages: UpdateLogMessage[] = [];
                 const updates: CreatureUpdates[] = [];
@@ -485,6 +480,7 @@ function createTracker() {
                         temp: false,
                         max: false,
                         status: null,
+                        remove_status: null,
                         saved: false,
                         unc: false,
                         ac: null,
@@ -521,6 +517,9 @@ function createTracker() {
                         } else {
                             message.saved = true;
                         }
+                    }
+                    if (removeStatuses.length) {
+                        change.remove_status = [...removeStatuses];
                     }
                     if (ac) {
                         if (ac.charAt(0) == "+" || ac.charAt(0) == "-") {
@@ -1134,7 +1133,7 @@ class Tracker {
                     const unc = this.#data.statuses.find(
                         (s) => s.id == this.#data.unconsciousId
                     );
-                    if (unc) creature.status.add(unc);
+                    if (unc) creature.addCondition(unc);
                 }
             }
             if (change.max) {
@@ -1177,18 +1176,15 @@ class Tracker {
             }
             if (change.status?.length) {
                 for (const status of change.status) {
-                    if ([...creature.status].find((s) => s.id == status.id)) {
-                        creature.status = new Set(
-                            [...creature.status].filter(
-                                (s) => s.id != status.id
-                            )
-                        );
-                        this.tryLog(
-                            `${creature.name} relieved of status ${status.name}`
-                        );
-                    } else {
-                        creature.status.add(status);
-                    }
+                    creature.addCondition(status);
+                }
+            }
+            if (change.remove_status?.length) {
+                for (const status of change.remove_status) {
+                    creature.removeCondition(status);
+                    this.tryLog(
+                        `${creature.name} relieved of status ${status.name}`
+                    );
                 }
             }
             if ("hidden" in change) {
@@ -1227,7 +1223,7 @@ class Tracker {
             return creatures;
         });
     }
-    doUpdate(toAddString: string, statuses: Condition[], ac: string) {
+    doUpdate(toAddString: string, statuses: Condition[], ac: string, removeStatuses: Condition[]) {
         this.updating.update((updatingCreatures) => {
             const messages: UpdateLogMessage[] = [];
             const updates: CreatureUpdates[] = [];
@@ -1249,6 +1245,7 @@ class Tracker {
                     temp: false,
                     max: false,
                     status: null,
+                    remove_status: null,
                     saved: false,
                     unc: false,
                     ac: null,
@@ -1285,6 +1282,10 @@ class Tracker {
                     } else {
                         message.saved = true;
                     }
+                }
+                if (removeStatuses.length) {
+                    message.remove_status = removeStatuses.map((s) => s.name);
+                    change.remove_status = [...removeStatuses]
                 }
                 if (ac) {
                     if (ac.charAt(0) == "+" || ac.charAt(0) == "-") {
