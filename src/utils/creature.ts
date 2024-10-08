@@ -57,6 +57,15 @@ export class Creature {
         }
         this.modifier = this.modifier ?? 0;
     }
+    addCondition(condition: Condition) {
+        if (![...this.status].find(cond => cond.name === condition.name && cond.amount === condition.amount)) {
+            this.status.add(condition);
+        }
+    }
+    removeCondition(condition: Condition) {
+        this.status = new Set(
+            [...this.status].filter((s) => s.id != condition.id)
+        );    }
     constructor(public creature: HomebrewCreature, initiative: number = 0) {
         this.name = creature.name;
         this.display = creature.display;

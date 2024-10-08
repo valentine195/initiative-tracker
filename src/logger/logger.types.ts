@@ -4,6 +4,7 @@ export interface UpdateLogMessage {
     hp: number | null;
     temp: boolean;
     status: string[] | null;
+    remove_status: string[] | null;
     max: boolean;
     saved: boolean;
     unc: boolean;

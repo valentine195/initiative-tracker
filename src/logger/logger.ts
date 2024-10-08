@@ -223,6 +223,25 @@ export default class Logger {
                     perCreature.push(`took ${status.join(" and ")} status`);
                 }
             }
+            if (message.remove_status) {
+                if (perCreature.length) {
+                    perCreature.push("and");
+                } else {
+                    perCreature.push(message.name);
+                }
+                let status;
+                if (message.remove_status.length > 1) {
+                    status = [
+                        message.remove_status
+                            .slice(0, message.remove_status.length - 1)
+                            .join(", ")
+                    ];
+                    status.push(message.remove_status[message.remove_status.length - 1]);
+                } else {
+                    status = [message.remove_status[0]];
+                }
+                perCreature.push(`relieved of ${status.join(" and ")} status`);
+            }
             toLog.push(perCreature.join(" "));
         }
         this.log(`${toLog.join(". ")}.`);
