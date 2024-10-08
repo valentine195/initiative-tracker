@@ -1070,10 +1070,10 @@ class NewPlayerModal extends Modal {
                     const { ac, hp, modifier, level, name } =
                         metaData.frontmatter;
                     this.player.name = name ?? this.player.name;
-                    this.player.ac = ac ?? this.player.ac;
-                    this.player.hp = hp ?? this.player.hp;
-                    this.player.level = level ?? this.player.level;
-                    this.player.modifier = modifier ?? this.player.modifier;
+                    this.player.ac = parseInt(ac ?? this.player.ac, 10);
+                    this.player.hp = parseInt(hp ?? this.player.hp, 10);
+                    this.player.level = parseInt(level ?? this.player.level, 10);
+                    this.player.modifier = parseInt(modifier ?? this.player.modifier, 10);
                     this.player["statblock-link"] =
                         metaData.frontmatter["statblock-link"];
                     this.display();
