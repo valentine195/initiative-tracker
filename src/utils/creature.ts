@@ -35,6 +35,7 @@ export class Creature {
     status: Set<Condition> = new Set();
     marker: string;
     initiative: number;
+    manualOrder: number;
     static: boolean = false;
     source: string | string[];
     id: string;

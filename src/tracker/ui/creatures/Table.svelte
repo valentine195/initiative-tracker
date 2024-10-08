@@ -54,7 +54,10 @@
             tracker.logNewInitiative(dropped.creature);
         }
         items = e.detail.items;
-        $tracker = [...items.map(({ creature }) => creature)];
+        $tracker = [...items.map(({ creature }, i) => {
+            creature.manualOrder = i;
+            return creature;
+        })];
     }
 
     const diceIcon = (node: HTMLElement) => {

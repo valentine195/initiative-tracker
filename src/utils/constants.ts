@@ -18,6 +18,18 @@ export enum RollPlayerInitiativeBehavior {
     SetToZero
 }
 
+export const OVERFLOW_TYPE: { [key: string]: string } = {
+    ignore: "ignore",
+    current: "current",
+    temp: "temp"
+};
+
+export const RESOLVE_TIES: { [key: string]: string } = {
+    playerFirst: "playerFirst",
+    npcFirst: "npcFirst",
+    random: "random",
+};
+
 export const DEFAULT_SETTINGS: InitiativeTrackerData = {
     players: [],
     parties: [],
@@ -54,11 +66,12 @@ export const DEFAULT_SETTINGS: InitiativeTrackerData = {
         player: true,
         builder: true
     },
-    hpOverflow: "ignore",
+    hpOverflow: OVERFLOW_TYPE.ignore,
     additiveTemp: false,
     rpgSystem: "dnd5e",
     logging: false,
     logFolder: "/",
+    resolveTies: RESOLVE_TIES.playerFirst,
     useLegacy: false,
     diplayPlayerHPValues: true,
     rollHP: false,
@@ -69,12 +82,6 @@ export const DEFAULT_SETTINGS: InitiativeTrackerData = {
         sidebarIcon: true
     },
     rollPlayerInitiatives: RollPlayerInitiativeBehavior.Always
-};
-
-export const OVERFLOW_TYPE: { [key: string]: string } = {
-    ignore: "ignore",
-    current: "current",
-    temp: "temp"
 };
 
 export const DECIMAL_TO_VULGAR_FRACTION: Record<string, string> = {

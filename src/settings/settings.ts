@@ -20,7 +20,9 @@ import {
     DEFAULT_UNDEFINED,
     EDIT,
     HP,
-    INITIATIVE
+    INITIATIVE,
+    OVERFLOW_TYPE,
+    RESOLVE_TIES
 } from "../utils";
 import { RpgSystemSetting, getRpgSystem } from "../utils/rpg-system";
 import type { Party } from "./settings.types";
@@ -209,10 +211,10 @@ export default class InitiativeTrackerSettings extends PluginSettingTab {
                 "Set what happens to healing which goes above creatures' max HP threshold."
             )
             .addDropdown((d) => {
-                d.addOption("ignore", "Ignore");
-                d.addOption("temp", "Add to temp HP");
-                d.addOption("current", "Add to current HP");
-                d.setValue(this.plugin.data.hpOverflow ?? "ignore");
+                d.addOption(OVERFLOW_TYPE.ignore, "Ignore");
+                d.addOption(OVERFLOW_TYPE.temp, "Add to temp HP");
+                d.addOption(OVERFLOW_TYPE.current, "Add to current HP");
+                d.setValue(this.plugin.data.hpOverflow ?? OVERFLOW_TYPE.ignore);
                 d.onChange(async (v) => {
                     this.plugin.data.hpOverflow = v;
                     this.plugin.saveSettings();
@@ -327,6 +329,21 @@ export default class InitiativeTrackerSettings extends PluginSettingTab {
                     this.plugin.data.logFolder = normalizePath(item.path);
                     await this.plugin.saveSettings();
                     this.display();
+                });
+            });
+            new Setting(additionalContainer)
+            .setName("Resolve Initiative Ties")
+            .setDesc(
+                "Define what happens if two creatures have the same initiative."
+            )
+            .addDropdown((d) => {
+                d.addOption(RESOLVE_TIES.playerFirst, "Player first");
+                d.addOption(RESOLVE_TIES.npcFirst, "NPC first");
+                d.addOption(RESOLVE_TIES.random, "Random");
+                d.setValue(this.plugin.data.resolveTies ?? RESOLVE_TIES.playerFirst);
+                d.onChange(async (v) => {
+                    this.plugin.data.resolveTies = v;
+                    this.plugin.saveSettings();
                 });
             });
     }
