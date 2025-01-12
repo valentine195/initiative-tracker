@@ -3,7 +3,7 @@
 
     import CreatureTemplate from "./Creature.svelte";
 
-    import { AC, DICE, HP, META_MODIFIER } from "src/utils";
+    import { AC, DICE, HP, LOCK, UNLOCK } from "src/utils";
     import { Creature, getId } from "src/utils/creature";
     import { createEventDispatcher } from "svelte";
     import { dndzone } from "svelte-dnd-action";
@@ -14,7 +14,7 @@
     import { getContext } from "svelte";
 
     const plugin = getContext<InitiativeTracker>("plugin");
-    const { state, ordered } = tracker;
+    const { state, ordered, dragEnabled } = tracker;
 
     $: items = [...$ordered].map((c) => {
         return { creature: c, id: getId() };
@@ -60,11 +60,34 @@
     const diceIcon = (node: HTMLElement) => {
         new ExtraButtonComponent(node).setIcon(DICE);
     };
+
+    const lockIcon = (node: HTMLElement) => {
+        new ExtraButtonComponent(node).setIcon(LOCK);
+    };
+
+    const unlockIcon = (node: HTMLElement) => {
+        new ExtraButtonComponent(node).setIcon(UNLOCK);
+    };
 </script>
 
 <table class="initiative-tracker-table">
     {#if $ordered.length}
         <thead class="tracker-table-header">
+            {#if $dragEnabled}
+                <td
+                    style="width: 10%;"
+                    use:unlockIcon
+                    aria-label="Lock Drag & Drop"
+                    on:click={() => ($dragEnabled = false)}
+                />
+            {:else}
+                <td
+                    style="width: 10%;"
+                    use:lockIcon
+                    aria-label="Unlock Drag & Drop"
+                    on:click={() => ($dragEnabled = true)}
+                />
+            {/if}
             <td
                 style="width: 10%;"
                 use:diceIcon
@@ -81,7 +104,8 @@
                 items,
                 flipDurationMs,
                 dropTargetStyle: {},
-                morphDisabled: true
+                morphDisabled: true,
+                dragDisabled: !$dragEnabled
             }}
             on:consider={handleDndConsider}
             on:finalize={handleDndFinalize}
