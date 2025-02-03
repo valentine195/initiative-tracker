@@ -59,8 +59,11 @@
     const icon = (type: SortFunctions) => {
         switch (type) {
             case SortFunctions.LOCAL_COMPARE:
+            case SortFunctions.PF2_TRAIT:
+            case SortFunctions.PF2_TYPE:
                 return SORT_STRING;
             case SortFunctions.CONVERT_FRACTION:
+            case SortFunctions.PF2_LEVEL:
                 return SORT_NUMBER;
             case SortFunctions.CUSTOM:
                 return "function-square";

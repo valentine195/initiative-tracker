@@ -13,6 +13,9 @@ export interface BuilderState {
 export enum SortFunctions {
     LOCAL_COMPARE,
     CONVERT_FRACTION,
+    PF2_LEVEL,
+    PF2_TYPE, 
+    PF2_TRAIT,
     CUSTOM
 }
 export type TableHeaderState = {

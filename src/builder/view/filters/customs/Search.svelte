@@ -1,8 +1,8 @@
 <script lang="ts">
     import { TextComponent, debounce } from "obsidian";
-    import type { StringFilterStore } from "src/builder/stores/filter/filter";
+    import type { StringFilterStore, PF2_TraitFilterStore, PF2_Monster_TypeFilterStore } from "src/builder/stores/filter/filter";
 
-    export let filter: StringFilterStore;
+    export let filter: StringFilterStore|PF2_TraitFilterStore|PF2_Monster_TypeFilterStore;
     const search = (node: HTMLElement) => {
         new TextComponent(node).setPlaceholder(filter.text).onChange(
             debounce((v) => {

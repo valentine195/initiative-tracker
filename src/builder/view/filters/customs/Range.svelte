@@ -1,9 +1,8 @@
 <script lang="ts">
-    import type { RangeFilterStore } from "src/builder/stores/filter/filter";
+    import type { PF2_Level_RangeFilterStore, RangeFilterStore } from "src/builder/stores/filter/filter";
     import Slider from "./Slider.svelte";
 
-    export let filter: RangeFilterStore;
-
+    export let filter: RangeFilterStore|PF2_Level_RangeFilterStore;
     $: min = `Min ${filter.filter.text}`;
     $: max = `Max ${filter.filter.text}`;
 </script>

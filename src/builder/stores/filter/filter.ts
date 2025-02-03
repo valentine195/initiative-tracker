@@ -2,7 +2,7 @@ import copy from "fast-copy";
 import type { SRDMonster } from "src/types/creatures";
 import { prepareSimpleSearch, type SearchResult } from "obsidian";
 import type InitiativeTracker from "src/main";
-import { convertFraction } from "src/utils";
+import { convertFraction, PF2LevelToNumber} from "src/utils";
 import { getId } from "src/utils/creature";
 import {
     derived,
@@ -15,8 +15,11 @@ import {
 
 export enum FilterType {
     Range,
+    PF2_Level_Range, 
+    PF2_Monster_Type,
     Search,
-    Options
+    Options, 
+    PF2_Trait
 }
 
 interface BaseFilter {
@@ -30,6 +33,14 @@ interface RangeFilter extends BaseFilter {
     type: FilterType.Range;
     options: [number, number];
 }
+interface PF2_Level_RangeFilter extends BaseFilter {
+    type: FilterType.PF2_Level_Range;
+    options: [number, number];
+}
+interface PF2_Monster_TypeFilter extends BaseFilter {
+    type: FilterType.PF2_Monster_Type;
+    options: string;
+}
 interface OptionsFilter extends BaseFilter {
     type: FilterType.Options;
     options: string[];
@@ -38,7 +49,11 @@ interface StringFilter extends BaseFilter {
     type: FilterType.Search;
     options: string;
 }
-export type Filter = RangeFilter | OptionsFilter | StringFilter;
+interface PF2_TraitFilter extends BaseFilter {
+    type: FilterType.PF2_Trait;
+    options: string;
+}
+export type Filter = RangeFilter | PF2_Level_RangeFilter | OptionsFilter | StringFilter | PF2_TraitFilter | PF2_Monster_TypeFilter;
 export const DEFAULT_NEW_FILTER: Filter = {
     type: FilterType.Search,
     fields: [],
@@ -62,6 +77,14 @@ export interface RangeFilterStore
     extends BaseFilterStore<RangeFilter, number | string> {
     type: FilterType.Range;
 }
+export interface PF2_Level_RangeFilterStore
+    extends BaseFilterStore<PF2_Level_RangeFilter, number | string> {
+    type: FilterType.PF2_Level_Range;
+}
+export interface PF2_Monster_TypeFilterStore
+    extends BaseFilterStore<PF2_Monster_TypeFilter, number | string> {
+    type: FilterType.PF2_Monster_Type;
+}
 export interface OptionsFilterStore
     extends BaseFilterStore<OptionsFilter, number | string> {
     type: FilterType.Options;
@@ -70,8 +93,12 @@ export interface StringFilterStore
     extends BaseFilterStore<StringFilter, number | string> {
     type: FilterType.Search;
 }
+export interface PF2_TraitFilterStore
+    extends BaseFilterStore<PF2_TraitFilter, number | string> {
+    type: FilterType.PF2_Trait;
+}
 
-type FilterStore = RangeFilterStore | OptionsFilterStore | StringFilterStore;
+type FilterStore = RangeFilterStore | PF2_Level_RangeFilterStore | OptionsFilterStore | StringFilterStore | PF2_TraitFilterStore | PF2_Monster_TypeFilterStore;
 
 type FilterFactory<T extends Filter> = (filter: T) => FilterStore;
 
@@ -109,6 +136,67 @@ const createRangeFilter: FilterFactory<RangeFilter> = (filter) => {
     };
 };
 
+
+const createPF2_Level_RangeFilter: FilterFactory<PF2_Level_RangeFilter> = (filter) => {
+    const store = writable<[number, number]>([...filter.options]);
+    const { update, set, subscribe } = store;
+    const isDefault = derived(store, (existing) => {
+        if (
+            filter.options[0] == existing[0] &&
+            filter.options[1] == existing[1]
+        )
+            return true;
+        return false;
+    });
+    return {
+        isDefault,
+        getIsDefault: () => get(isDefault),
+
+        update,
+        set,
+        subscribe,
+
+        reset: () => set([...filter.options]),
+
+        compare: (value: number | string) => {
+            if (get(isDefault)) return true;
+            const values = get(store);
+            return (
+                PF2LevelToNumber(value)[0] >= values[0] &&
+                PF2LevelToNumber(value)[0] <= values[1]
+            );
+        },
+        filter,
+        ...filter
+    };
+};
+
+const createPF2_Monster_TypeFilter: FilterFactory<PF2_Monster_TypeFilter> = (filter) => {
+    let DEFAULT_STRING: string = "";
+    const store = writable<string>(DEFAULT_STRING);
+    const { subscribe, set, update } = store;
+
+    const isDefault = derived(store, (existing) => {
+        return !existing.length;
+    });
+    let search = prepareSimpleSearch("");
+    store.subscribe((value) => (search = prepareSimpleSearch(value)));
+    return {
+        isDefault,
+        getIsDefault: () => get(isDefault),
+        subscribe,
+        set,
+        reset: () => set(DEFAULT_STRING),
+        compare: (value: number | string) => {
+            if (get(isDefault)) return true;
+            if (typeof value === "number") return false;
+            return get(isDefault) || search(PF2LevelToNumber(value)[1]) != null;
+        },
+        update,
+        filter,
+        ...filter
+    };
+};
 function normalize(str: string): string {
     if (typeof str !== "string") return str;
     return str.toLowerCase();
@@ -168,14 +256,48 @@ const createStringFilter: FilterFactory<StringFilter> = (filter) => {
     };
 };
 
+const createPF2_TraitFilter: FilterFactory<PF2_TraitFilter> = (filter) => {
+    let DEFAULT_STRING: string = "";
+    const store = writable<string>(DEFAULT_STRING);
+    const { subscribe, set, update } = store;
+
+    const isDefault = derived(store, (existing) => {
+        return !existing.length;
+    });
+    let search = prepareSimpleSearch("");
+    store.subscribe((value) => (search = prepareSimpleSearch(value)));
+    return {
+        isDefault,
+        getIsDefault: () => get(isDefault),
+        subscribe,
+        set,
+        reset: () => set(DEFAULT_STRING),
+        compare: (value: number | string) => {
+            if (get(isDefault)) return true;
+            if (typeof value === "number") return false;
+            return get(isDefault) || search(value) != null;
+        },
+        update,
+        filter,
+        ...filter
+    };
+};
+
+
 function getFilterStore(filter: Filter) {
     switch (filter.type) {
         case FilterType.Options:
             return createOptionsFilter(filter);
         case FilterType.Range:
             return createRangeFilter(filter);
+        case FilterType.PF2_Level_Range:
+            return createPF2_Level_RangeFilter(filter);
+        case FilterType.PF2_Monster_Type:
+            return createPF2_Monster_TypeFilter(filter);
         case FilterType.Search:
             return createStringFilter(filter);
+        case FilterType.PF2_Trait:
+            return createPF2_TraitFilter(filter);
     }
 }
 export type BuiltFilterStore = ReturnType<typeof createFilterStore>;
@@ -217,6 +339,33 @@ function getDerivedFilterOptions(
                             options.set(filter, new Set(current));
                             break;
                         }
+                        case FilterType.PF2_Level_Range: {
+                            let fieldAsNumber = PF2LevelToNumber(
+                                creature[field]
+                            )[0];
+                            if (fieldAsNumber == null || isNaN(fieldAsNumber))
+                                continue;
+                            const current = [
+                                ...options.get(filter)
+                            ] as number[];
+                            if (!current.length) {
+                                current[0] = Infinity;
+                                current[1] = -Infinity;
+                            }
+                            current[0] = Math.min(current[0], fieldAsNumber);
+                            if (
+                                Math.max(current[1], fieldAsNumber) !=
+                                current[0]
+                            ) {
+                                current[1] = Math.max(
+                                    current[1],
+                                    fieldAsNumber
+                                );
+                            }
+
+                            options.set(filter, new Set(current));
+                            break;
+                        }
                         case FilterType.Options: {
                             if (Array.isArray(creature[field])) {
                                 for (const value of creature[field]) {
@@ -229,9 +378,10 @@ function getDerivedFilterOptions(
                             }
                             break;
                         }
-                        case FilterType.Search: {
+                        case FilterType.Search:
+                        case FilterType.PF2_Monster_Type:
+                        case FilterType.PF2_Trait:
                             continue;
-                        }
                     }
                     continue;
                 }
@@ -307,9 +457,22 @@ export function createFilterStore(
             if (
                 filters.every((filter) => {
                     if (!filter.filter.fields.length) return true;
-                    for (const field of filter.filter.fields) {
-                        if (!(field in creature)) continue;
-                        return filter.compare(creature[field]);
+                    switch (filter.filter.type){
+                        case FilterType.PF2_Trait: {
+                            return Object.keys(creature).some((field) => {
+                                return filter.filter.fields.some((filter_field) =>{
+                                    if(field.startsWith(filter_field + '_')) {
+                                        return filter.compare(creature[field]);
+                                    };
+                            });
+                        });
+                        }
+                        default: {
+                            for (const field of filter.filter.fields) {
+                                if (!(field in creature)) continue;
+                                return filter.compare(creature[field]);
+                            }
+                        }
                     }
                     return true;
                 })
@@ -432,53 +595,58 @@ const NAME_FILTER: StringFilter = {
 
 export const DEFAULT_FILTERS: Filter[] = [
     {
-        type: FilterType.Range,
-        text: "CR",
-        fields: ["cr"],
-        options: [0, 30],
-        id: "ID_DEFAULT_CR_FILTER",
+        type: FilterType.PF2_Level_Range,
+        text: "Level",
+        fields: ["level"],
+        options: [-1, 30],
+        id: "ID_DEFAULT_PF2_LVL_FILTER",
         derive: true
     },
     {
-        type: FilterType.Options,
-        text: "Size",
-        fields: ["size"],
-        options: [],
-        id: "ID_DEFAULT_SIZE_FILTER",
+        type: FilterType.PF2_Trait,
+        text: "Trait",
+        fields: ["trait"],
+        options: "",
+        id: "ID_DEFAULT_PF2_TRAIT_FILTER",
         derive: true
     },
     {
-        type: FilterType.Options,
+        type: FilterType.Search,
+        text: "Source",
+        fields: ["source"],
+        options: "",
+        id: "ID_DEFAULT_PF2_SOURCE_FILTER",
+        derive: true
+    },
+    {
+        type: FilterType.PF2_Monster_Type,
         text: "Type",
-        fields: ["type"],
-        options: [],
-        id: "ID_DEFAULT_TYPE_FILTER",
-        derive: true
-    },
-    {
-        type: FilterType.Options,
-        text: "Alignment",
-        fields: ["alignment"],
-        options: [],
-        id: "ID_DEFAULT_ALIGNMENT_FILTER",
+        fields: ["level"],
+        options: "",
+        id: "ID_DEFAULT_PF2_CREATURE_TYPE_FILTER",
         derive: true
     }
 ];
 
 const ORIGINAL_DEFAULT_LAYOUT: FilterLayout = [
     {
-        nested: [{ id: "ID_DEFAULT_CR_FILTER", type: "filter" }],
-        id: "ID_DEFAULT_NESTED_CR",
-        type: "nested"
+        id: "ID_DEFAULT_LVL_LAYOUT",
+        type: "nested",
+        nested: [{ id: "ID_DEFAULT_PF2_LVL_FILTER", type: "filter" }]
     },
     {
         id: "ID_DEFAULT_NESTED_LAYOUT",
         type: "nested",
         nested: [
-            { id: "ID_DEFAULT_SIZE_FILTER", type: "filter" },
-            { id: "ID_DEFAULT_TYPE_FILTER", type: "filter" },
-            { id: "ID_DEFAULT_ALIGNMENT_FILTER", type: "filter" }
+            { id: "ID_DEFAULT_PF2_TRAIT_FILTER", type: "filter" },
+            { id: "ID_DEFAULT_PF2_SOURCE_FILTER", type: "filter" }
         ]
+        
+    },
+    {
+        id: "ID_DEFAULT_NESTED_LAYOUT_2",
+        type: "nested",
+        nested: [{ id: "ID_DEFAULT_PF2_CREATURE_TYPE_FILTER", type: "filter" }]
     }
 ];
 

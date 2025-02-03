@@ -4,7 +4,7 @@ import {
     type TableHeaderState
 } from "src/builder/builder.types";
 import { type SRDMonster } from "src/types/creatures";
-import { convertFraction } from "../../../utils";
+import { convertFraction, PF2LevelToNumber} from "../../../utils";
 import type InitiativeTracker from "../../../main";
 import { Modal } from "obsidian";
 import copy from "fast-copy";
@@ -33,6 +33,33 @@ export class TableHeader {
                 return (a: Record<string, any>, b: Record<string, any>) =>
                     convertFraction(a[this.field] ?? 0) -
                     convertFraction(b[this.field] ?? 0);
+            }
+            case SortFunctions.PF2_LEVEL: {
+                return (a: Record<string, any>, b: Record<string, any>) => {
+                    const [a_level, a_type] = PF2LevelToNumber(a[this.field]);
+                    const [b_level, b_type] = PF2LevelToNumber(b[this.field]);
+                    
+                    if (a_level == b_level) {
+                        return a_type.localeCompare(b_type);
+                    }
+                    return ((a_level ?? 0) - (b_level ?? 0));
+                }
+            }
+            case SortFunctions.PF2_TYPE: {
+                return (a: Record<string, any>, b: Record<string, any>) => {
+                    const [a_level, a_type] = PF2LevelToNumber(a[this.field]);
+                    const [b_level, b_type] = PF2LevelToNumber(b[this.field]);
+                    
+                    if (a_type == b_type) {
+                        return ((a_level ?? 0) - (b_level ?? 0));
+                    }
+                    return a_type.localeCompare(b_type);
+                }
+            }
+            case SortFunctions.PF2_TRAIT: {
+                return (a: Record<string, any>, b: Record<string, any>) => {
+                    return 1;
+                }
             }
             case SortFunctions.CUSTOM: {
                 return new Function("a", "b", this.func!) as (
@@ -73,24 +100,9 @@ export class TableHeader {
 
 export const DEFAULT_HEADERS: TableHeaderState[] = [
     {
-        text: "CR",
-        field: "cr",
-        type: SortFunctions.CONVERT_FRACTION
-    },
-    {
-        text: "Type",
-        field: "type",
-        type: SortFunctions.LOCAL_COMPARE
-    },
-    {
-        text: "Size",
-        field: "size",
-        type: SortFunctions.LOCAL_COMPARE
-    },
-    {
-        text: "Alignment",
-        field: "alignment",
-        type: SortFunctions.LOCAL_COMPARE
+        text: "Level",
+        field: "level",
+        type: SortFunctions.PF2_LEVEL
     }
 ];
 

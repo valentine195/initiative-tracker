@@ -39,6 +39,20 @@ export function crToString(cr: string | number): string {
     return str;
 }
 
+export function PF2LevelToNumber(lvl_field: string | number): [number, string] {
+    if (typeof lvl_field == "string") {
+        const type = lvl_field.split(" ")
+                        .slice(0, -1)
+                        .join(" ");
+        const lvl = parseInt(lvl_field.split(" ")
+                             .slice(-1).join(""));
+
+        return [lvl, type];
+    }
+    
+    return [lvl_field, "Creature"];
+}
+
 export function getFromCreatureOrBestiary<T>(
     plugin: InitiativeTracker,
     creature: Creature | SRDMonster,

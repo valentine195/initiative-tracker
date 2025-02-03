@@ -4,10 +4,14 @@
     import { getContext } from "svelte";
     import { encounter } from "../../stores/encounter";
     import Nullable from "../Nullable.svelte";
-    import { convertFraction, DEFAULT_UNDEFINED } from "src/utils";
+    import { convertFraction, DEFAULT_UNDEFINED, PF2LevelToNumber } from "src/utils";
     import { Creature as CreatureCreator } from "src/utils/creature";
-    import type { createTable } from "src/builder/stores/table/table";
+    import type { createTable, TableHeader} from "src/builder/stores/table/table";
+    import {SortFunctions} from "../../builder.types"
     import type InitiativeTracker from "src/main";
+    import Table from "src/tracker/ui/creatures/Table.svelte";
+    import { keyword$DataError } from "ajv/dist/compile/errors";
+    import { _ } from "ajv";
 
     const { players } = encounter;
     const { average } = players;
@@ -30,7 +34,9 @@
             return "";
         }
         if (property == null) return ``;
-        if (typeof property == "string") return property;
+        if (typeof property == "string") {
+            return property.replaceAll("<STATBLOCK-WIKI-LINK>", '');
+        }
         if (typeof property == "number") return `${property}`;
         if (Array.isArray(property)) {
             ret.push(
@@ -58,6 +64,23 @@
     function getTooltip(source: string | string[]): string {
         if (!Array.isArray(source)) return "";
         return stringify(source, 0, ", ", false);
+    }
+    function getCreatureField(creature : SRDMonster, header: TableHeader) : string {
+        switch (header.type) {
+            case SortFunctions.PF2_LEVEL:
+                return PF2LevelToNumber(creature[header.field])[0].toString();
+            case SortFunctions.PF2_TYPE:
+                return PF2LevelToNumber(creature[header.field])[1];
+            case SortFunctions.PF2_TRAIT:
+                const traits = Object.keys(creature).filter((key) => {
+                    return key.startsWith(header.field + '_');
+                }).map((key) => creature[key]);
+
+                return stringify(traits, 0, ", ", false);
+            default:
+                return creature[header.field];
+
+        }
     }
 
     $: insignificant =
@@ -112,7 +135,7 @@
         </div>
     </td>
     {#each $table as header}
-        <td><Nullable str={creature[header.field] ?? DEFAULT_UNDEFINED} /></td>
+        <td><Nullable str={getCreatureField(creature, header) ?? DEFAULT_UNDEFINED} /></td>
     {/each}
 </tr>
 

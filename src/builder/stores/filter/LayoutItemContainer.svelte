@@ -27,7 +27,14 @@
                 return setIcon(node, "search");
             case FilterType.Options:
                 return setIcon(node, "list");
+            case FilterType.PF2_Level_Range:
+                return setIcon(node, "sliders-horizontal");
+            case FilterType.PF2_Trait:
+                return setIcon(node, "search");
+            case FilterType.PF2_Monster_Type:
+            return setIcon(node, "search");
         }
+
     };
     const edit = (node: HTMLElement) => {
         new ExtraButtonComponent(node).setIcon("pencil");

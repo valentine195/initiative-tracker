@@ -34,6 +34,9 @@ export class EditModal extends Modal {
             .addDropdown((t) => {
                 t.addOption(`${SortFunctions.LOCAL_COMPARE}`, "String");
                 t.addOption(`${SortFunctions.CONVERT_FRACTION}`, "Number");
+                t.addOption(`${SortFunctions.PF2_LEVEL}`, "PF2 - Level");
+                t.addOption(`${SortFunctions.PF2_TYPE}`, "PF2 - Monster type");
+                t.addOption(`${SortFunctions.PF2_TRAIT}`, "PF2 - Traits");
                 t.addOption(`${SortFunctions.CUSTOM}`, "Custom");
                 t.setValue(`${this.header.type}`).onChange((v) => {
                     this.header.type = Number(v);

@@ -5,6 +5,9 @@
         FilterType,
         type LayoutItem,
         type OptionsFilterStore,
+        PF2_Monster_TypeFilterStore,
+        PF2_Level_RangeFilterStore,
+        PF2_TraitFilterStore,
         type RangeFilterStore,
         type StringFilterStore
     } from "src/builder/stores/filter/filter";
@@ -17,7 +20,7 @@
     const { filters } = filterStore;
     export let layout: LayoutItem;
 
-    let filter: RangeFilterStore | OptionsFilterStore | StringFilterStore;
+    let filter: RangeFilterStore | OptionsFilterStore | StringFilterStore | PF2_Level_RangeFilterStore | PF2_TraitFilterStore | PF2_Monster_TypeFilterStore;
     $: {
         if (!("nested" in layout)) {
             filter = $filters.get(layout.id);
@@ -36,10 +39,19 @@
         {#if filter.type == FilterType.Range}
             <Range {filter} />
         {/if}
+        {#if filter.type == FilterType.PF2_Level_Range}
+            <Range {filter} />
+        {/if}
         {#if filter.type == FilterType.Options}
             <Options {filter} />
         {/if}
         {#if filter.type == FilterType.Search}
+            <Search {filter} />
+        {/if}
+        {#if filter.type == FilterType.PF2_Trait}
+            <Search {filter} />
+        {/if}
+        {#if filter.type == FilterType.PF2_Monster_Type}
             <Search {filter} />
         {/if}
     </div>
